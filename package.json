@@ -1,7 +1,8 @@
 {
     "name": "scad-models",
-    "author": "Jan Kropáč",
+    "author": { "name": "Jan Kropáč (hondzik)" },
     "description": "OpenSCAD models + versioned STL / zip / source generation and a generated README",
+    "license": "(CC-BY-4.0 AND MIT)",
     "private": true,
     "type": "module",
     "engines": { "node": ">=22.2" },
