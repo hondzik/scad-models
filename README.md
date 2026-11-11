@@ -4,7 +4,24 @@
 
 Parametric OpenSCAD models for 3D printing. Every model lives in `src/<model>/` and is built into STL files, a zip and a source snapshot per version under `dist/<model>/`.
 
-_No models yet. Add one as `src/<model>/<model>.scad`, then run `npm run build`._
+| Model | Description | Version | Parts |
+|---|---|---|---|
+| [zbminir2-cord-switch](#zbminir2-cord-switch) | Rectangular two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both short sides. Superseded by the round variant `zbminir2-cord-floor-switch`. | 1.0.0 | `base`, `lid`, `clamp` |
+
+## zbminir2-cord-switch
+
+Rectangular two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both short sides. Superseded by the round variant `zbminir2-cord-floor-switch`.
+
+<img src="dist/zbminir2-cord-switch/v1.0.0/images/zbminir2-cord-switch-base.png" alt="zbminir2-cord-switch base" width="230"> <img src="dist/zbminir2-cord-switch/v1.0.0/images/zbminir2-cord-switch-lid.png" alt="zbminir2-cord-switch lid" width="230"> <img src="dist/zbminir2-cord-switch/v1.0.0/images/zbminir2-cord-switch-clamp.png" alt="zbminir2-cord-switch clamp" width="230">
+
+- Source: [`src/zbminir2-cord-switch/zbminir2-cord-switch.scad`](src/zbminir2-cord-switch/zbminir2-cord-switch.scad)
+- Documentation: [`src/zbminir2-cord-switch/README.md`](src/zbminir2-cord-switch/README.md)
+- Current version: **1.0.0**
+- Parts: `base`, `lid`, `clamp`
+
+| Version | Download (zip of all STL) | Source | Changes |
+|---|---|---|---|
+| 1.0.0 | [zbminir2-cord-switch-v1.0.0.zip](dist/zbminir2-cord-switch/v1.0.0/zbminir2-cord-switch-v1.0.0.zip) | [zbminir2-cord-switch-v1.0.0.scad](dist/zbminir2-cord-switch/v1.0.0/zbminir2-cord-switch-v1.0.0.scad) | Initial versioned release: rectangular two-part enclosure; "base" is the lower half and "lid" the upper half |
 
 ## License
 
