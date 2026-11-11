@@ -125,9 +125,9 @@ function listModels() {
 // --- minimal zip writer (stored in memory, deflate, no dependencies) ---
 
 function makeZip(entries) {
-    const now = new Date();
-    const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
-    const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+    // fixed DOS timestamp (1980-01-01 00:00) so that identical STL files always give an identical zip
+    const dosTime = 0;
+    const dosDate = (0 << 9) | (1 << 5) | 1;
     const chunks = [];
     const central = [];
     let offset = 0;
@@ -199,6 +199,17 @@ function renderImage(openscad, stlFile, pngFile) {
 let failed = 0;
 let built = 0;
 
+// True when dist/<model>/v<version>/ holds the source snapshot identical to `src` and every expected output
+function isUpToDate(outDir, name, version, parts, src) {
+    const snapshot = join(outDir, `${name}-v${version}.scad`);
+    if (!existsSync(snapshot)) return false;
+    const norm = (t) => t.replace(/\r\n/g, '\n');
+    if (norm(readFileSync(snapshot, 'utf8')) !== norm(src)) return false;
+    return existsSync(join(outDir, `${name}-v${version}.zip`))
+        && parts.every((p) => existsSync(join(outDir, `${name}-${p}.stl`))
+            && existsSync(join(outDir, 'images', `${name}-${p}.png`)));
+}
+
 function buildModel(openscad, name) {
     const file = join(srcDir, name, `${name}.scad`);
     const src = readFileSync(file, 'utf8');
@@ -232,6 +243,12 @@ function buildModel(openscad, name) {
             failed++;
             return;
         }
+    }
+    // Nothing to do when the version folder is complete and was built from exactly this source.
+    // (OpenSCAD's STL output is not byte-stable between runs, so rebuilding would only create noise in git.)
+    if (!onlyPart && !force && isUpToDate(outDir, name, version, parts, src)) {
+        console.log(`${name} v${version}: up to date (source unchanged) – skipped, use --force to rebuild`);
+        return;
     }
     // full build = clean temporary folder that replaces the version folder on success; one part = written in place
     const workDir = onlyPart ? outDir : `${outDir}.building`;
