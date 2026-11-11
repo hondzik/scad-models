@@ -6,7 +6,23 @@ Parametric OpenSCAD models for 3D printing. Every model lives in `src/<model>/` 
 
 | Model | Description | Version | Parts |
 |---|---|---|---|
+| [zbminir2-cord-floor-switch](#zbminir2-cord-floor-switch) | Round two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both ends, plus a floor-switch button with a spring-loaded cap. | 1.0.0 | `base`, `lid`, `clamp`, `cap` |
 | [zbminir2-cord-switch](#zbminir2-cord-switch) | Rectangular two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both short sides. Superseded by the round variant `zbminir2-cord-floor-switch`. | 1.0.0 | `base`, `lid`, `clamp` |
+
+## zbminir2-cord-floor-switch
+
+Round two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both ends, plus a floor-switch button with a spring-loaded cap.
+
+<img src="dist/zbminir2-cord-floor-switch/v1.0.0/images/zbminir2-cord-floor-switch-base.png" alt="zbminir2-cord-floor-switch base" width="230"> <img src="dist/zbminir2-cord-floor-switch/v1.0.0/images/zbminir2-cord-floor-switch-lid.png" alt="zbminir2-cord-floor-switch lid" width="230"> <img src="dist/zbminir2-cord-floor-switch/v1.0.0/images/zbminir2-cord-floor-switch-clamp.png" alt="zbminir2-cord-floor-switch clamp" width="230"> <img src="dist/zbminir2-cord-floor-switch/v1.0.0/images/zbminir2-cord-floor-switch-cap.png" alt="zbminir2-cord-floor-switch cap" width="230">
+
+- Source: [`src/zbminir2-cord-floor-switch/zbminir2-cord-floor-switch.scad`](src/zbminir2-cord-floor-switch/zbminir2-cord-floor-switch.scad)
+- Documentation: [`src/zbminir2-cord-floor-switch/README.md`](src/zbminir2-cord-floor-switch/README.md)
+- Current version: **1.0.0**
+- Parts: `base`, `lid`, `clamp`, `cap`
+
+| Version | Download (zip of all STL) | Source | Changes |
+|---|---|---|---|
+| 1.0.0 | [zbminir2-cord-floor-switch-v1.0.0.zip](dist/zbminir2-cord-floor-switch/v1.0.0/zbminir2-cord-floor-switch-v1.0.0.zip) | [zbminir2-cord-floor-switch-v1.0.0.scad](dist/zbminir2-cord-floor-switch/v1.0.0/zbminir2-cord-floor-switch-v1.0.0.scad) | Initial versioned release: round two-part enclosure (base + lid) with cable clamps, ZBMINIR frames and ribs that grow with inner_z, floor switch feet, guide sleeve and button cap |
 
 ## zbminir2-cord-switch
 
