@@ -1,0 +1,11 @@
+{
+    "name": "scad-models",
+    "author": "Jan Kropáč",
+    "description": "OpenSCAD models + versioned STL / zip / source generation and a generated README",
+    "private": true,
+    "type": "module",
+    "engines": { "node": ">=22.2" },
+    "scripts": {
+        "build": "node scripts/build-stl.mjs"
+    }
+}
