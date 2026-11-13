@@ -6,8 +6,24 @@ Parametric OpenSCAD models for 3D printing. Every model lives in `src/<model>/` 
 
 | Model | Description | Version | Parts |
 |---|---|---|---|
+| [filament-cutting-holder](#filament-cutting-holder) | Parametric block with a filament channel for cutting filament at defined angles: a 90° cutter slot at one end, angled slots (by default 60° and 45°) at the other end, chamfered edges and magnet holes in the bottom face. | 1.0.0 | `holder` |
 | [zbminir2-cord-floor-switch](#zbminir2-cord-floor-switch) | Round two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both ends, plus a floor-switch button with a spring-loaded cap. | 1.0.0 | `base`, `lid`, `clamp`, `cap` |
 | [zbminir2-cord-switch](#zbminir2-cord-switch) | Rectangular two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both short sides. Superseded by the round variant `zbminir2-cord-floor-switch`. | 1.0.0 | `base`, `lid`, `clamp` |
+
+## filament-cutting-holder
+
+Parametric block with a filament channel for cutting filament at defined angles: a 90° cutter slot at one end, angled slots (by default 60° and 45°) at the other end, chamfered edges and magnet holes in the bottom face.
+
+<img src="dist/filament-cutting-holder/v1.0.0/images/filament-cutting-holder-holder.png" alt="filament-cutting-holder holder" width="340">
+
+- Source: [`src/filament-cutting-holder/filament-cutting-holder.scad`](src/filament-cutting-holder/filament-cutting-holder.scad)
+- Documentation: [`src/filament-cutting-holder/README.md`](src/filament-cutting-holder/README.md)
+- Current version: **1.0.0**
+- Parts: `holder`
+
+| Version | Download (zip of all STL) | Source | Changes |
+|---|---|---|---|
+| 1.0.0 | [filament-cutting-holder-v1.0.0.zip](dist/filament-cutting-holder/v1.0.0/filament-cutting-holder-v1.0.0.zip) | [filament-cutting-holder-v1.0.0.scad](dist/filament-cutting-holder/v1.0.0/filament-cutting-holder-v1.0.0.scad) | Initial versioned release: filament cutting holder with 90° and angled cutter slots, chamfered edges and magnet holes |
 
 ## zbminir2-cord-floor-switch
 
