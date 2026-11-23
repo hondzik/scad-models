@@ -4,6 +4,7 @@
 // `part = "all"` shows the assembled object in colour (preview only – STL has no colour; print the parts in two colours).
 //
 // CHANGELOG (newest first; keep `model_version` below in sync)
+// 1.0.1 - fix: the name pocket in the letter ignored name_lower_case, so it did not match the inlay
 // 1.0.0 - first release: letter + name inlay, assembled coloured preview, presets per name, optional stand (auto/yes/no)
 
 /* [ Settings ] */
@@ -30,6 +31,7 @@ stand_overlap = 5;
 name_font = "Script MT Bold:style=Regular";
 name_height = 80;
 name_depth = 15;
+// write the name in lower case (both the inlay and its pocket in the big letter)
 name_lower_case = true;
 // preview colour only
 name_color = "#f5f5f5";
@@ -43,7 +45,7 @@ $fn = 100;
 parts = ["letter", "name"];
 part = "all";
 preview_part = "all";   // part rendered for the assembled preview image (see scripts/build-stl.mjs)
-model_version = "1.0.0";
+model_version = "1.0.1";
 
 // Převod jednoho kódu znaku na malé písmeno
 function lowerCode(k) =
@@ -114,18 +116,20 @@ module stand_plate() {
         cube([stand_width, stand_thickness + stand_overlap, first_letter_depth]);
 }
 
-// the big capital with a pocket (opened to the top) for the name, clearance around the inlay, optional stand
+// the big capital (without diacritics) with a pocket (opened to the top) for the name, `clearance` around the inlay,
+// plus the optional stand plate
 module letter_part() {
     difference() {
         union() {
             formatted3DText(first_capital, first_letter_height, first_letter_depth, first_letter_font);
             if (use_stand) stand_plate();
         }
-        translate([0, 0, name_z]) formatted3DText(name, height = name_height, depth = name_depth + 1, font = name_font, clearance = clearance);
+        translate([0, 0, name_z]) formatted3DText(name, height = name_height, depth = name_depth + 1, font = name_font, clearance = clearance, lower_case = name_lower_case);
     }
 }
 
-// the inlay: whole name in lower case, print orientation = flat on Z=0
+// the inlay: the whole name (lower case when name_lower_case), print orientation = flat on Z=0.
+// The pocket in letter_part() is cut from the same text, so both must be called with the same lower_case.
 module name_part() {
     formatted3DText(name, height = name_height, depth = name_depth, font = name_font, lower_case = name_lower_case);
 }
