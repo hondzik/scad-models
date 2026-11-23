@@ -8,6 +8,7 @@ Parametric OpenSCAD models for 3D printing. Every model lives in `src/<model>/` 
 |---|---|---|---|
 | [calendar-card-stand](#calendar-card-stand) | Parametric stand for a pack of cards (e.g. a card calendar of 148 × 105 mm cards, 13 mm thick): a tray that holds the pack at its bottom edge and a separate prop that tilts it to a chosen angle. An all-in-one variant with both parts fused together is included. | 1.0.0 | `holder`, `prop`, `all-in-one` |
 | [filament-cutting-holder](#filament-cutting-holder) | Parametric block with a filament channel for cutting filament at defined angles: a 90° cutter slot at one end, angled slots (by default 60° and 45°) at the other end, chamfered edges and magnet holes in the bottom face. | 1.0.0 | `holder` |
+| [name-letter](#name-letter) | Big capital first letter of a name with the whole name inlaid across it. Two parts: `letter` (with a pocket) and `name` (the inlay to glue in); print them in two colours. | 1.0.0 | `letter`, `name` |
 | [zbminir2-cord-floor-switch](#zbminir2-cord-floor-switch) | Round two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both ends, plus a floor-switch button with a spring-loaded cap. | 1.0.0 | `base`, `lid`, `clamp`, `cap` |
 | [zbminir2-cord-switch](#zbminir2-cord-switch) | Rectangular two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both short sides. Superseded by the round variant `zbminir2-cord-floor-switch`. | 1.0.0 | `base`, `lid`, `clamp` |
 
@@ -40,6 +41,21 @@ Parametric block with a filament channel for cutting filament at defined angles:
 | Version | Download (zip of all STL) | Source | Changes |
 |---|---|---|---|
 | 1.0.0 | [filament-cutting-holder-v1.0.0.zip](dist/filament-cutting-holder/v1.0.0/filament-cutting-holder-v1.0.0.zip) | [filament-cutting-holder-v1.0.0.scad](dist/filament-cutting-holder/v1.0.0/filament-cutting-holder-v1.0.0.scad) | Initial versioned release: filament cutting holder with 90° and angled cutter slots, chamfered edges and magnet holes |
+
+## name-letter
+
+Big capital first letter of a name with the whole name inlaid across it. Two parts: `letter` (with a pocket) and `name` (the inlay to glue in); print them in two colours.
+
+<img src="dist/name-letter/v1.0.0/images/name-letter-terezka-preview.png" alt="name-letter terezka-preview" width="230"> <img src="dist/name-letter/v1.0.0/images/name-letter-klara-preview.png" alt="name-letter klara-preview" width="230"> <img src="dist/name-letter/v1.0.0/images/name-letter-honza-preview.png" alt="name-letter honza-preview" width="230"> <img src="dist/name-letter/v1.0.0/images/name-letter-tom-preview.png" alt="name-letter tom-preview" width="230"> <img src="dist/name-letter/v1.0.0/images/name-letter-petra-preview.png" alt="name-letter petra-preview" width="230"> <img src="dist/name-letter/v1.0.0/images/name-letter-daniel-preview.png" alt="name-letter daniel-preview" width="230"> <img src="dist/name-letter/v1.0.0/images/name-letter-eliska-preview.png" alt="name-letter eliska-preview" width="230">
+
+- Source: [`src/name-letter/name-letter.scad`](src/name-letter/name-letter.scad)
+- Documentation: [`src/name-letter/README.md`](src/name-letter/README.md)
+- Current version: **1.0.0**
+- Parts: `letter`, `name`
+
+| Version | Download (zip of all STL) | Source | Changes |
+|---|---|---|---|
+| 1.0.0 | [name-letter-daniel-v1.0.0.zip](dist/name-letter/v1.0.0/name-letter-daniel-v1.0.0.zip)<br>[name-letter-eliska-v1.0.0.zip](dist/name-letter/v1.0.0/name-letter-eliska-v1.0.0.zip)<br>[name-letter-honza-v1.0.0.zip](dist/name-letter/v1.0.0/name-letter-honza-v1.0.0.zip)<br>[name-letter-klara-v1.0.0.zip](dist/name-letter/v1.0.0/name-letter-klara-v1.0.0.zip)<br>[name-letter-petra-v1.0.0.zip](dist/name-letter/v1.0.0/name-letter-petra-v1.0.0.zip)<br>[name-letter-terezka-v1.0.0.zip](dist/name-letter/v1.0.0/name-letter-terezka-v1.0.0.zip)<br>[name-letter-tom-v1.0.0.zip](dist/name-letter/v1.0.0/name-letter-tom-v1.0.0.zip) | [name-letter-v1.0.0.scad](dist/name-letter/v1.0.0/name-letter-v1.0.0.scad) | first release: letter + name inlay, assembled coloured preview, presets per name, optional stand (auto/yes/no) |
 
 ## zbminir2-cord-floor-switch
 
