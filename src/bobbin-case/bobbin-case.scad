@@ -61,27 +61,36 @@ module lid(radius, height) {
     }
 }
 
-module bobbin_holder(bobbin_radius, height, columns, spacing) {
-    d = bobbin_circle_radius(bobbin_radius, spacing, columns);
-    R = d + bobbin_radius - spacing/2;
-    linear_extrude(height = height)
-        difference() {
-            circle(r=R);
-            for (c = [0:columns-1]) {
-                angle = 360 * c / columns;
-                translate([d * cos(angle), d * sin(angle), 0]) circle(r=bobbin_radius);
+module holder(lid_r, lid_height, bobbin_r, holder_h, num_of_columns, column_spacing) {
+    union() {
+        lid(lid_r, lid_height);
+        translate([0, 0, lid_height]) {
+            d = bobbin_circle_radius(bobbin_r, column_spacing, num_of_columns);
+            R = d + bobbin_r - column_spacing/2;
+            linear_extrude(height = holder_h) difference() {
+                circle(r=R);
+                for (c = [0:num_of_columns-1]) {
+                    angle = 360 * c / num_of_columns;
+                    translate([d * cos(angle), d * sin(angle), 0]) circle(r=bobbin_r);
+                }
             }
         }
+    }    
 }
 
-module bobbin_cover(bobbin_radius, height, columns, spacing, wall) {
-    d = bobbin_circle_radius(bobbin_radius, spacing, columns);
-    R = d + bobbin_radius + spacing/2;
-    linear_extrude(height = height + spacing/2)
-        difference() {
-            circle(r=R + wall);
-            circle(r=R);
+module cover(lid_r, lid_height, bobbin_r, holder_h, num_of_columns, column_spacing, cover_thickness) {
+    union() {
+        lid(lid_r, lid_height);
+        translate([0, 0, lid_height]) {
+            d = bobbin_circle_radius(bobbin_r, column_spacing, num_of_columns);
+            R = d + bobbin_r + column_spacing/2;
+            linear_extrude(height = holder_h + column_spacing/2)
+                difference() {
+                    circle(r=R + cover_thickness);
+                    circle(r=R);
+                }
         }
+    }    
 }
 
 bobbin = bobbin_type(bobbin_type);
@@ -90,12 +99,8 @@ bobbin_h = bobbin[2] * 1.05; // add 5% to bobbin height for clearance
 holder_h = bobbin_h * bobbins_in_column;
 lid_r = holder_radius(bobbin_r, column_spacing, num_of_columns, lid_overlap, cover_thickness);
 
-translate([lid_r*1.1, lid_r*1.1, 0]) union() {
-    lid(lid_r, lid_height);
-    translate([0, 0, lid_height]) bobbin_holder(bobbin_r, holder_h, num_of_columns, column_spacing);
-}
+translate([lid_r * 1.1, lid_r * 1.1, 0]) 
+    holder(lid_r, lid_height, bobbin_r, holder_h, num_of_columns, column_spacing);
 
-translate([lid_r*1.1, -lid_r*1.1, 0]) union() {
-    lid(lid_r, lid_height);
-    translate([0, 0, lid_height]) bobbin_cover(bobbin_r, holder_h, num_of_columns, column_spacing, cover_thickness);
-}
+translate([lid_r*1.1, -lid_r*1.1, 0])
+    cover(lid_r, lid_height, bobbin_r, holder_h, num_of_columns, column_spacing, cover_thickness);
