@@ -13,19 +13,29 @@
 // Optional per-model documentation: src/<model>/README.md (the first paragraph under the title is used as the
 // description in the main README).
 //
+// Optional: `preview_part = "all";` names the part that shows the ASSEMBLED (and coloured, via color()) object. It is
+// rendered straight from the .scad into images/<base>-preview.png (it is not exported to STL, as STL has no colour).
+// Optional presets: src/<model>/<model>.json (OpenSCAD Customizer parameter sets). When it holds any set besides
+// "design default values", every set is built as its own variant; <base> = <model>-<preset-slug> (e.g.
+// name-letter-anna). Without presets <base> = <model>.
+//
 // Output (generated, keep it – older versions stay untouched when you bump model_version):
 //     dist/<model>/v<version>/
-//         <model>-<part>.stl          one STL per part
-//         <model>-v<version>.zip      all STL files in one zip
-//         <model>-v<version>.scad     snapshot of the source
-//         images/<model>-<part>.png   preview of every part, rendered from the STL
+//         <base>-<part>.stl           one STL per part (and per preset)
+//         <base>-v<version>.zip       all STL files of the variant in one zip
+//         <model>-v<version>.scad     snapshot of the source (+ <model>-v<version>.json snapshot of the presets)
+//         images/<base>-<part>.png    preview of every part, rendered from the STL
+//         images/<base>-preview.png   assembled / coloured preview (only with preview_part)
 //
 // Usage:
 //     npm run build                      # all models -> dist/<model>/v<model_version>/
 //     npm run build -- <model>           # one model
 //     npm run build -- <model> <part>    # one part only (STL + image; no zip, source snapshot or README refresh)
 //     add --force to overwrite a version folder that was built from a different source
+//     npm run build -- <model> --preset="Anna"   # one preset only (rebuilt even if up to date)
 //     npm run build -- --readme          # only regenerate README.md (no OpenSCAD run)
+// With presets a build is incremental: only variants whose files are missing or whose preset parameters changed
+// are rebuilt, so adding a preset never needs a version bump (a changed .scad still does).
 // An optional src/README.footer.md (e.g. the license section) is appended verbatim to README.md.
 // Safety guard: if dist/<model>/v<version>/ already holds a source snapshot that differs from the current .scad,
 // the build is refused (bump model_version instead, or pass --force). Rebuilding unchanged source is always allowed.
@@ -58,6 +68,7 @@ function packageName() {
 const args = process.argv.slice(2);
 const force = args.includes('--force');
 const readmeOnly = args.includes('--readme');
+const onlyPreset = args.find((a) => a.startsWith('--preset='))?.slice('--preset='.length) || null;
 const [onlyModel, onlyPart] = args.filter((a) => !a.startsWith('--'));
 
 function findOpenScad() {
@@ -199,22 +210,73 @@ function renderImage(openscad, stlFile, pngFile) {
 let failed = 0;
 let built = 0;
 
-// True when dist/<model>/v<version>/ holds the source snapshot identical to `src` and every expected output
-function isUpToDate(outDir, name, version, parts, src) {
-    const snapshot = join(outDir, `${name}-v${version}.scad`);
-    if (!existsSync(snapshot)) return false;
-    const norm = (t) => t.replace(/\r\n/g, '\n');
-    if (norm(readFileSync(snapshot, 'utf8')) !== norm(src)) return false;
-    return existsSync(join(outDir, `${name}-v${version}.zip`))
-        && parts.every((p) => existsSync(join(outDir, `${name}-${p}.stl`))
-            && existsSync(join(outDir, 'images', `${name}-${p}.png`)));
+const normText = (t) => t.replace(/\r\n/g, '\n');
+
+// Optional `preview_part = "all";` – name of the part (rendered with -D part=...) that shows the ASSEMBLED, coloured
+// object. It is rendered straight from the .scad (preview mode, so color() works) into images/<base>-preview.png.
+function readPreviewPart(src) {
+    const m = stripComments(src).match(/^\s*preview_part\s*=\s*"([^"]+)"\s*;/m);
+    return m ? m[1] : null;
+}
+
+// --- presets (Customizer parameter sets in src/<model>/<model>.json) ---
+
+const DEFAULT_SET = 'design default values'; // set that OpenSCAD creates automatically – not built as a preset
+
+function readPresetFile(file) {
+    try {
+        return JSON.parse(readFileSync(file, 'utf8')).parameterSets ?? {};
+    } catch {
+        return {};
+    }
+}
+
+const slugify = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+// One variant = one built set of files. Without presets there is a single variant with base = model name,
+// with presets there is one variant per preset with base = <model>-<preset-slug>.
+function listVariants(name) {
+    const presets = Object.keys(readPresetFile(join(srcDir, name, `${name}.json`))).filter((p) => p !== DEFAULT_SET);
+    if (!presets.length) return [{ preset: null, base: name }];
+    const seen = new Set();
+    return presets.map((preset) => {
+        const slug = slugify(preset);
+        if (!slug || seen.has(slug)) throw new Error(`preset name "${preset}" gives an empty or duplicate file name "${slug}"`);
+        seen.add(slug);
+        return { preset, base: `${name}-${slug}` };
+    });
+}
+
+// True when every expected output of the variant exists in `dir`
+function variantComplete(dir, v, version, parts, previewPart) {
+    return existsSync(join(dir, `${v.base}-v${version}.zip`))
+        && parts.every((p) => existsSync(join(dir, `${v.base}-${p}.stl`))
+            && existsSync(join(dir, 'images', `${v.base}-${p}.png`)))
+        && (!previewPart || existsSync(join(dir, 'images', `${v.base}-preview.png`)));
+}
+
+// Renders the assembled / coloured preview PNG directly from the .scad (preview mode keeps color())
+function renderPreview(openscad, file, presetArgs, previewPart, pngFile) {
+    mkdirSync(dirname(pngFile), { recursive: true });
+    const r = spawnSync(openscad, [
+        '-o', pngFile, ...presetArgs, '-D', `part="${previewPart}"`, '--preview', '--imgsize=900,700',
+        '--autocenter', '--viewall', '--projection=p', '--camera=0,0,0,55,0,25,500', '--colorscheme=Tomorrow', file,
+    ], { encoding: 'utf8' });
+    if (r.status !== 0 || !existsSync(pngFile)) {
+        console.warn(`  ! preview ${basename(pngFile)} failed: ${(r.stderr || String(r.error || '')).trim().split('\n').pop()}`);
+        return false;
+    }
+    return true;
 }
 
 function buildModel(openscad, name) {
     const file = join(srcDir, name, `${name}.scad`);
+    const jsonFile = join(srcDir, name, `${name}.json`);
     const src = readFileSync(file, 'utf8');
     const parts = readParts(src);
     const version = readVersion(src);
+    const previewPart = readPreviewPart(src);
     if (!parts || parts.length === 0) {
         console.warn(`! ${name}: missing parts = [...] array, skipping`);
         return;
@@ -229,68 +291,115 @@ function buildModel(openscad, name) {
         failed++;
         return;
     }
-    const outDir = join(outRoot, name, `v${version}`);
-    // Safety guard: never silently overwrite a version that was built from a DIFFERENT source.
-    // The snapshot <model>-v<version>.scad in the version folder is compared with the current source.
-    const snapshot = join(outDir, `${name}-v${version}.scad`);
-    if (existsSync(snapshot) && !force) {
-        const norm = (t) => t.replace(/\r\n/g, '\n');
-        if (norm(readFileSync(snapshot, 'utf8')) !== norm(src)) {
-            console.error(
-                `! ${name}: version ${version} was already built from a different source (${snapshot}).\n`
-                + '  Bump model_version (and add a changelog entry) to keep the old version, or run with --force to overwrite it.',
-            );
+    let variants;
+    try {
+        variants = listVariants(name);
+    } catch (e) {
+        console.error(`! ${name}: ${e.message}`);
+        failed++;
+        return;
+    }
+    if (onlyPreset) {
+        variants = variants.filter((v) => v.preset === onlyPreset);
+        if (!variants.length) {
+            console.error(`! ${name}: preset "${onlyPreset}" not found in ${name}.json`);
             failed++;
             return;
         }
     }
-    // Nothing to do when the version folder is complete and was built from exactly this source.
-    // (OpenSCAD's STL output is not byte-stable between runs, so rebuilding would only create noise in git.)
-    if (!onlyPart && !force && isUpToDate(outDir, name, version, parts, src)) {
-        console.log(`${name} v${version}: up to date (source unchanged) – skipped, use --force to rebuild`);
+    const outDir = join(outRoot, name, `v${version}`);
+    // Safety guard: never silently overwrite a version that was built from a DIFFERENT source.
+    // The snapshot <model>-v<version>.scad in the version folder is compared with the current source.
+    // (Only the .scad counts – adding or editing presets in the .json never needs a version bump.)
+    const snapshot = join(outDir, `${name}-v${version}.scad`);
+    const snapshotJson = join(outDir, `${name}-v${version}.json`);
+    const hasSnapshot = existsSync(snapshot);
+    const sameSource = hasSnapshot && normText(readFileSync(snapshot, 'utf8')) === normText(src);
+    if (hasSnapshot && !sameSource && !force) {
+        console.error(
+            `! ${name}: version ${version} was already built from a different source (${snapshot}).\n`
+            + '  Bump model_version (and add a changelog entry) to keep the old version, or run with --force to overwrite it.',
+        );
+        failed++;
         return;
     }
-    // full build = clean temporary folder that replaces the version folder on success; one part = written in place
-    const workDir = onlyPart ? outDir : `${outDir}.building`;
-    if (!onlyPart) rmSync(workDir, { recursive: true, force: true });
+    // Which variants need building. OpenSCAD's STL output is not byte-stable between runs, so a variant is rebuilt
+    // only when its files are missing, its preset parameters changed, or the source changed (rebuilding would
+    // otherwise only create noise in git). An explicit part / --preset= always builds what was asked for.
+    const incremental = sameSource && !force;
+    const oldSets = incremental ? readPresetFile(snapshotJson) : {};
+    const newSets = readPresetFile(jsonFile);
+    const isStale = (v) => !incremental
+        || !variantComplete(outDir, v, version, parts, previewPart)
+        || (v.preset !== null && JSON.stringify(oldSets[v.preset]) !== JSON.stringify(newSets[v.preset]));
+    const todo = onlyPart || onlyPreset ? variants : variants.filter(isStale);
+    if (!todo.length) {
+        console.log(`${name} v${version}: up to date (source and presets unchanged) – skipped, use --force to rebuild`);
+        return;
+    }
+    // full build = clean temporary folder that replaces the version folder on success;
+    // incremental / single part / single preset = written in place into the existing version folder
+    const inPlace = Boolean(onlyPart || onlyPreset || incremental);
+    const workDir = inPlace ? outDir : `${outDir}.building`;
+    if (!inPlace) rmSync(workDir, { recursive: true, force: true });
     mkdirSync(workDir, { recursive: true });
 
     let modelFailed = false;
-    for (const part of parts.filter((p) => !onlyPart || p === onlyPart)) {
-        const out = join(workDir, `${name}-${part}.stl`);
-        const t0 = Date.now();
-        process.stdout.write(`${name} v${version} / ${part} ... `);
-        const r = spawnSync(openscad, ['-o', out, '-D', `part="${part}"`, file], { encoding: 'utf8' });
-        const sec = ((Date.now() - t0) / 1000).toFixed(1);
-        if (r.status !== 0 || !existsSync(out)) {
-            failed++;
-            modelFailed = true;
-            console.log(`ERROR (${sec} s)`);
-            console.error((r.stderr || String(r.error || '')).trim());
-        } else {
-            built++;
-            console.log(`OK (${sec} s) -> ${join(outDir, basename(out))}`);
-            renderImage(openscad, out, join(workDir, 'images', `${name}-${part}.png`));
+    for (const v of todo) {
+        const presetArgs = v.preset ? ['-p', jsonFile, '-P', v.preset] : [];
+        let variantFailed = false;
+        for (const part of parts.filter((p) => !onlyPart || p === onlyPart)) {
+            const out = join(workDir, `${v.base}-${part}.stl`);
+            const t0 = Date.now();
+            process.stdout.write(`${v.base} v${version} / ${part} ... `);
+            const r = spawnSync(openscad, ['-o', out, ...presetArgs, '-D', `part="${part}"`, file], { encoding: 'utf8' });
+            const sec = ((Date.now() - t0) / 1000).toFixed(1);
+            if (r.status !== 0 || !existsSync(out)) {
+                failed++;
+                variantFailed = true;
+                console.log(`ERROR (${sec} s)`);
+                console.error((r.stderr || String(r.error || '')).trim());
+            } else {
+                built++;
+                console.log(`OK (${sec} s) -> ${join(outDir, basename(out))}`);
+                renderImage(openscad, out, join(workDir, 'images', `${v.base}-${part}.png`));
+            }
         }
+        if (onlyPart) continue; // a single part does not refresh preview / zip / source snapshot
+        if (variantFailed) {
+            modelFailed = true;
+            continue;
+        }
+        if (previewPart) {
+            process.stdout.write(`${v.base} v${version} / ${previewPart} (preview) ... `);
+            console.log(renderPreview(openscad, file, presetArgs, previewPart, join(workDir, 'images', `${v.base}-preview.png`)) ? 'OK' : 'failed');
+        }
+        // zip of all STL files of the variant
+        const zipName = `${v.base}-v${version}.zip`;
+        writeFileSync(
+            join(workDir, zipName),
+            makeZip(parts.map((p) => {
+                const n = `${v.base}-${p}.stl`;
+                return { name: n, data: readFileSync(join(workDir, n)) };
+            })),
+        );
+        console.log(`  + ${zipName}`);
     }
-    if (onlyPart) return; // a single part does not refresh zip / source snapshot
+    if (onlyPart) return;
 
     if (modelFailed) {
-        rmSync(workDir, { recursive: true, force: true });
-        console.error(`! ${name}: build failed, the existing v${version} folder was left untouched.`);
+        if (!inPlace) rmSync(workDir, { recursive: true, force: true });
+        console.error(`! ${name}: build failed${inPlace ? ', the source snapshot was not refreshed' : `, the existing v${version} folder was left untouched`}.`);
         return;
     }
-    // zip of all STL files + snapshot of the source, then swap the finished folder in
-    const stls = parts.map((p) => `${name}-${p}.stl`);
-    const zipName = `${name}-v${version}.zip`;
-    writeFileSync(
-        join(workDir, zipName),
-        makeZip(stls.map((n) => ({ name: n, data: readFileSync(join(workDir, n)) }))),
-    );
+    // snapshot of the source (+ presets), then swap the finished folder in
     copyFileSync(file, join(workDir, `${name}-v${version}.scad`));
-    rmSync(outDir, { recursive: true, force: true });
-    renameSync(workDir, outDir);
-    console.log(`  + ${zipName}, ${name}-v${version}.scad, images/`);
+    if (existsSync(jsonFile)) copyFileSync(jsonFile, join(workDir, `${name}-v${version}.json`));
+    if (!inPlace) {
+        rmSync(outDir, { recursive: true, force: true });
+        renameSync(workDir, outDir);
+    }
+    console.log(`  + ${name}-v${version}.scad${existsSync(jsonFile) ? ', .json' : ''}, images/`);
 }
 
 // --- main README.md (generated) ---
@@ -342,7 +451,22 @@ function generateReadme() {
         const hasDoc = existsSync(join(srcDir, name, 'README.md'));
         // images of the parts of the current version (<model>-<part>.png, in the order of `parts`)
         const imgRel = rel('dist', name, `v${version}`, 'images');
-        const images = parts.filter((p) => existsSync(join(outRoot, name, `v${version}`, 'images', `${name}-${p}.png`)));
+        // (+ the assembled preview of every variant/preset when the model has `preview_part`)
+        const variants = (() => {
+            try {
+                return listVariants(name);
+            } catch {
+                return [{ preset: null, base: name }];
+            }
+        })();
+        const imgDir = join(outRoot, name, `v${version}`, 'images');
+        const images = [];
+        for (const v of variants) {
+            if (existsSync(join(imgDir, `${v.base}-preview.png`))) images.push(`${v.base}-preview`);
+            if (variants.length === 1) {
+                for (const p of parts) if (existsSync(join(imgDir, `${v.base}-${p}.png`))) images.push(`${v.base}-${p}`);
+            }
+        }
 
         lines.push(
             `| [${name}](#${name}) | ${desc || '–'} | ${version}${isBuilt ? '' : ' *(not built yet)*'} | ${parts.map((p) => `\`${p}\``).join(', ')} |`,
@@ -353,7 +477,7 @@ function generateReadme() {
         if (images.length)
             s.push(
                 images
-                    .map((p) => `<img src="${imgRel}/${name}-${p}.png" alt="${name} ${p}" width="${images.length > 2 ? 230 : 340}">`)
+                    .map((img) => `<img src="${imgRel}/${img}.png" alt="${img.replace(`${name}-`, `${name} `)}" width="${images.length > 2 ? 230 : 340}">`)
                     .join(' '),
                 '',
             );
@@ -367,8 +491,10 @@ function generateReadme() {
             for (const v of releases) {
                 const dir = rel('dist', name, `v${v}`);
                 const entry = changelog.find((e) => e.version === v);
+                const zips = readdirSync(join(outRoot, name, `v${v}`)).filter((f) => f.endsWith('.zip')).sort();
+                const links = zips.map((z) => `[${z}](${dir}/${z})`).join('<br>');
                 s.push(
-                    `| ${v} | [${name}-v${v}.zip](${dir}/${name}-v${v}.zip) | [${name}-v${v}.scad](${dir}/${name}-v${v}.scad) | ${entry ? entry.summary : ''} |`,
+                    `| ${v} | ${links} | [${name}-v${v}.scad](${dir}/${name}-v${v}.scad) | ${entry ? entry.summary : ''} |`,
                 );
             }
             s.push('');
