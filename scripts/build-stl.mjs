@@ -1,4 +1,4 @@
-// Builds STL files for every part of every model in ./src/<model>/<model>.scad, packs them into a zip,
+// Builds STL files for every part of every model in ./src/<model>/<model>.scad,
 // snapshots the source and regenerates the main README.md.
 //
 // Convention: every model lives in its own folder src/<model>/ and has a main file <model>.scad that defines
@@ -15,6 +15,7 @@
 //
 // Optional: `preview_part = "all";` names the part that shows the ASSEMBLED (and coloured, via color()) object. It is
 // rendered straight from the .scad into images/<base>-preview.png (it is not exported to STL, as STL has no colour).
+// This is the only image that is generated; models without `preview_part` get no image.
 // Optional presets: src/<model>/<model>.json (OpenSCAD Customizer parameter sets). When it holds any set besides
 // "design default values", every set is built as its own variant; <base> = <model>-<preset-slug> (e.g.
 // name-letter-anna). Without presets <base> = <model>.
@@ -22,15 +23,13 @@
 // Output (generated, keep it – older versions stay untouched when you bump model_version):
 //     dist/<model>/v<version>/
 //         <base>-<part>.stl           one STL per part (and per preset)
-//         <base>-v<version>.zip       all STL files of the variant in one zip
 //         <model>-v<version>.scad     snapshot of the source (+ <model>-v<version>.json snapshot of the presets)
-//         images/<base>-<part>.png    preview of every part, rendered from the STL
 //         images/<base>-preview.png   assembled / coloured preview (only with preview_part)
 //
 // Usage:
 //     npm run build                      # all models -> dist/<model>/v<model_version>/
 //     npm run build -- <model>           # one model
-//     npm run build -- <model> <part>    # one part only (STL + image; no zip, source snapshot or README refresh)
+//     npm run build -- <model> <part>    # one part only (STL only; no preview, source snapshot or README refresh)
 //     add --force to overwrite a version folder that was built from a different source
 //     npm run build -- <model> --preset="Anna"   # one preset only (rebuilt even if up to date)
 //     npm run build -- --readme          # only regenerate README.md (no OpenSCAD run)
@@ -47,10 +46,8 @@ import { spawnSync } from 'node:child_process';
 import {
     copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync,
 } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { crc32, deflateRawSync } from 'node:zlib';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const srcDir = join(root, 'src');
@@ -133,78 +130,6 @@ function listModels() {
         .sort();
 }
 
-// --- minimal zip writer (stored in memory, deflate, no dependencies) ---
-
-function makeZip(entries) {
-    // fixed DOS timestamp (1980-01-01 00:00) so that identical STL files always give an identical zip
-    const dosTime = 0;
-    const dosDate = (0 << 9) | (1 << 5) | 1;
-    const chunks = [];
-    const central = [];
-    let offset = 0;
-    for (const { name, data } of entries) {
-        const nameBuf = Buffer.from(name, 'utf8');
-        const packed = deflateRawSync(data);
-        const crc = crc32(data);
-        const local = Buffer.alloc(30);
-        local.writeUInt32LE(0x04034b50, 0);
-        local.writeUInt16LE(20, 4);
-        local.writeUInt16LE(0x0800, 6); // UTF-8 names
-        local.writeUInt16LE(8, 8); // deflate
-        local.writeUInt16LE(dosTime, 10);
-        local.writeUInt16LE(dosDate, 12);
-        local.writeUInt32LE(crc, 14);
-        local.writeUInt32LE(packed.length, 18);
-        local.writeUInt32LE(data.length, 22);
-        local.writeUInt16LE(nameBuf.length, 26);
-        chunks.push(local, nameBuf, packed);
-
-        const cd = Buffer.alloc(46);
-        cd.writeUInt32LE(0x02014b50, 0);
-        cd.writeUInt16LE(20, 4);
-        cd.writeUInt16LE(20, 6);
-        cd.writeUInt16LE(0x0800, 8);
-        cd.writeUInt16LE(8, 10);
-        cd.writeUInt16LE(dosTime, 12);
-        cd.writeUInt16LE(dosDate, 14);
-        cd.writeUInt32LE(crc, 16);
-        cd.writeUInt32LE(packed.length, 20);
-        cd.writeUInt32LE(data.length, 24);
-        cd.writeUInt16LE(nameBuf.length, 28);
-        cd.writeUInt32LE(offset, 42);
-        central.push(cd, nameBuf);
-        offset += local.length + nameBuf.length + packed.length;
-    }
-    const cdBuf = Buffer.concat(central);
-    const end = Buffer.alloc(22);
-    end.writeUInt32LE(0x06054b50, 0);
-    end.writeUInt16LE(entries.length, 8);
-    end.writeUInt16LE(entries.length, 10);
-    end.writeUInt32LE(cdBuf.length, 12);
-    end.writeUInt32LE(offset, 16);
-    return Buffer.concat([...chunks, cdBuf, end]);
-}
-
-// --- images ---
-
-// Renders a PNG of a built STL (import() of the STL, so it is fast and always matches the file in the zip).
-// Images go to src/<model>/images/<model>-<part>.png and are refreshed on every build. A failure only warns.
-function renderImage(openscad, stlFile, pngFile) {
-    mkdirSync(dirname(pngFile), { recursive: true });
-    const tmp = join(tmpdir(), `scad-preview-${process.pid}.scad`);
-    writeFileSync(tmp, `import("${stlFile.replace(/\\/g, '/')}");\n`);
-    const r = spawnSync(openscad, [
-        '-o', pngFile, '--imgsize=900,700', '--autocenter', '--viewall', '--projection=p',
-        '--camera=0,0,0,55,0,25,500', '--colorscheme=Tomorrow', tmp,
-    ], { encoding: 'utf8' });
-    rmSync(tmp, { force: true });
-    if (r.status !== 0 || !existsSync(pngFile)) {
-        console.warn(`  ! image ${basename(pngFile)} failed: ${(r.stderr || String(r.error || '')).trim().split('\n').pop()}`);
-        return false;
-    }
-    return true;
-}
-
 // --- building ---
 
 let failed = 0;
@@ -250,9 +175,7 @@ function listVariants(name) {
 
 // True when every expected output of the variant exists in `dir`
 function variantComplete(dir, v, version, parts, previewPart) {
-    return existsSync(join(dir, `${v.base}-v${version}.zip`))
-        && parts.every((p) => existsSync(join(dir, `${v.base}-${p}.stl`))
-            && existsSync(join(dir, 'images', `${v.base}-${p}.png`)))
+    return parts.every((p) => existsSync(join(dir, `${v.base}-${p}.stl`)))
         && (!previewPart || existsSync(join(dir, 'images', `${v.base}-preview.png`)));
 }
 
@@ -362,10 +285,9 @@ function buildModel(openscad, name) {
             } else {
                 built++;
                 console.log(`OK (${sec} s) -> ${join(outDir, basename(out))}`);
-                renderImage(openscad, out, join(workDir, 'images', `${v.base}-${part}.png`));
             }
         }
-        if (onlyPart) continue; // a single part does not refresh preview / zip / source snapshot
+        if (onlyPart) continue; // a single part does not refresh preview / source snapshot
         if (variantFailed) {
             modelFailed = true;
             continue;
@@ -374,16 +296,6 @@ function buildModel(openscad, name) {
             process.stdout.write(`${v.base} v${version} / ${previewPart} (preview) ... `);
             console.log(renderPreview(openscad, file, presetArgs, previewPart, join(workDir, 'images', `${v.base}-preview.png`)) ? 'OK' : 'failed');
         }
-        // zip of all STL files of the variant
-        const zipName = `${v.base}-v${version}.zip`;
-        writeFileSync(
-            join(workDir, zipName),
-            makeZip(parts.map((p) => {
-                const n = `${v.base}-${p}.stl`;
-                return { name: n, data: readFileSync(join(workDir, n)) };
-            })),
-        );
-        console.log(`  + ${zipName}`);
     }
     if (onlyPart) return;
 
@@ -427,7 +339,7 @@ function generateReadme() {
         '',
         '<!-- GENERATED by scripts/build-stl.mjs – do not edit. Edit src/<model>/README.md and the changelog in the .scad header instead. -->',
         '',
-        'Parametric OpenSCAD models for 3D printing. Every model lives in `src/<model>/` and is built into STL files, a zip and a source snapshot per version under `dist/<model>/`.',
+        'Parametric OpenSCAD models for 3D printing. Every model lives in `src/<model>/` and is built into STL files and a source snapshot per version under `dist/<model>/`.',
         '',
     ];
     const names = listModels();
@@ -449,9 +361,8 @@ function generateReadme() {
                 .reverse()
             : [];
         const hasDoc = existsSync(join(srcDir, name, 'README.md'));
-        // images of the parts of the current version (<model>-<part>.png, in the order of `parts`)
-        const imgRel = rel('dist', name, `v${version}`, 'images');
-        // (+ the assembled preview of every variant/preset when the model has `preview_part`)
+                const imgRel = rel('dist', name, `v${version}`, 'images');
+        // assembled preview of every variant/preset (only models with `preview_part` have images)
         const variants = (() => {
             try {
                 return listVariants(name);
@@ -463,9 +374,6 @@ function generateReadme() {
         const images = [];
         for (const v of variants) {
             if (existsSync(join(imgDir, `${v.base}-preview.png`))) images.push(`${v.base}-preview`);
-            if (variants.length === 1) {
-                for (const p of parts) if (existsSync(join(imgDir, `${v.base}-${p}.png`))) images.push(`${v.base}-${p}`);
-            }
         }
 
         lines.push(
@@ -487,12 +395,12 @@ function generateReadme() {
         s.push(`- Parts: ${parts.map((p) => `\`${p}\``).join(', ')}`);
         s.push('');
         if (releases.length) {
-            s.push('| Version | Download (zip of all STL) | Source | Changes |', '|---|---|---|---|');
+            s.push('| Version | Download (STL) | Source | Changes |', '|---|---|---|---|');
             for (const v of releases) {
                 const dir = rel('dist', name, `v${v}`);
                 const entry = changelog.find((e) => e.version === v);
-                const zips = readdirSync(join(outRoot, name, `v${v}`)).filter((f) => f.endsWith('.zip')).sort();
-                const links = zips.map((z) => `[${z}](${dir}/${z})`).join('<br>');
+                const stls = readdirSync(join(outRoot, name, `v${v}`)).filter((f) => f.endsWith('.stl')).sort();
+                const links = stls.map((z) => `[${z}](${dir}/${z})`).join('<br>');
                 s.push(
                     `| ${v} | ${links} | [${name}-v${v}.scad](${dir}/${name}-v${v}.scad) | ${entry ? entry.summary : ''} |`,
                 );
