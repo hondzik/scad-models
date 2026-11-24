@@ -15,7 +15,7 @@ first_letter_font = "Times New Roman:style=Bold";
 first_letter_height = 200;
 first_letter_depth = 50;
 // preview colour only
-first_letter_color = "#c0392b";
+first_letter_color = "#e67e22";
 
 /* [ Stand ] */
 // thin base plate under the middle of the big letter; auto = only for letters without a flat bottom (C, G, O, S, U, ...)
@@ -34,7 +34,7 @@ name_depth = 15;
 // write the name in lower case (both the inlay and its pocket in the big letter)
 name_lower_case = true;
 // preview colour only
-name_color = "#f5f5f5";
+name_color = "#3498db";
 
 /* [ Fit ] */
 // gap around the name inlay [mm]
@@ -138,8 +138,11 @@ module render_part(p) {
     if (p == "letter") letter_part();
     else if (p == "name") name_part();
     else if (p == "all") {
-        color(first_letter_color) letter_part();
-        translate([0, 0, name_z]) color(name_color) name_part();
+        // render(): the preview shows white wedges around the pocket (coplanar faces) without it.
+        // The translucent letter is drawn LAST: the preview writes translucent objects into the depth buffer, so anything
+        // drawn after it would vanish behind it.
+        translate([0, 0, name_z]) color(name_color) render(convexity = 10) name_part();
+        color(first_letter_color, 0.35) render(convexity = 10) letter_part();
     }
     else assert(false, str("unknown part: ", p));
 }

@@ -3,36 +3,21 @@
         "design default values": {
             "$fn": "100",
             "clearance": "0.2",
-            "first_letter_color": "#c0392b",
+            "first_letter_color": "#e67e22",
             "first_letter_depth": "50",
             "first_letter_font": "Times New Roman:style=Bold",
             "first_letter_height": "200",
             "name": "Nemo",
-            "name_color": "#f5f5f5",
+            "name_color": "#3498db",
             "name_depth": "15",
             "name_font": "Script MT Bold:style=Regular",
             "name_height": "80"
         },
-        "Terezka": {
-            "name": "Terezka"
-        },
-        "Klara": {
-            "name": "Klára"
-        },
-        "Honza": {
-            "name": "Honza"
-        },
-        "Tom": {
-            "name": "Tom"
-        },
-        "Petra": {
-            "name": "Petra"
+        "Clara": {
+            "name": "Clara"
         },
         "Daniel": {
             "name": "Daniel"
-        },
-        "Eliska": {
-            "name": "Eliška"
         }
     },
     "fileFormatVersion": "1"

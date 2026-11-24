@@ -8,7 +8,7 @@ Every parameter set in `name-letter.json` (except `design default values`) is bu
 
 ## Colours
 
-`first_letter_color` and `name_color` colour the assembled preview (`part = "all"`, `images/*-preview.png`). STL carries no colour – set the colours per part in the slicer.
+`first_letter_color` (default orange) and `name_color` (default blue) colour the assembled preview (`part = "all"`, `images/*-preview.png`); the big letter is drawn translucent so that the inlay in its pocket shows. STL carries no colour – set the colours per part in the slicer.
 
 ## Big letter and stand
 
