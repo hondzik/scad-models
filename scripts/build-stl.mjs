@@ -16,6 +16,10 @@
 // Optional: `preview_part = "all";` names the part that shows the ASSEMBLED (and coloured, via color()) object. It is
 // rendered straight from the .scad into images/<base>-preview.png (it is not exported to STL, as STL has no colour).
 // This is the only image that is generated; models without `preview_part` get no image.
+// Optional `preview_camera = [55, 0, 25];` – camera rotation (x, y, z in degrees) for the preview image.
+// A preset may also set "preview_part": "<part>" to show another part in its preview image.
+// A preset may restrict the parts built for it with "parts": "[\"a\", \"b\"]" (a JSON array in a string, as OpenSCAD
+// overrides the `parts` variable with it as well); without that key a variant builds every part of the model.
 // Optional presets: src/<model>/<model>.json (OpenSCAD Customizer parameter sets). When it holds any set besides
 // "design default values", every set is built as its own variant; <base> = <model>-<preset-slug> (e.g.
 // name-letter-anna). Without presets <base> = <model>.
@@ -144,6 +148,14 @@ function readPreviewPart(src) {
     return m ? m[1] : null;
 }
 
+// Optional `preview_camera = [55, 0, 25];` – rotation (x, y, z, degrees) of the camera for the preview image.
+// Default 55, 0, 25; pick another angle when the default does not show the model well.
+function readPreviewCamera(src) {
+    const num = '(-?\\d+(?:\\.\\d+)?)';
+    const m = stripComments(src).match(new RegExp(`^\\s*preview_camera\\s*=\\s*\\[\\s*${num}\\s*,\\s*${num}\\s*,\\s*${num}\\s*\\]\\s*;`, 'm'));
+    return m ? [m[1], m[2], m[3]] : ['55', '0', '25'];
+}
+
 // --- presets (Customizer parameter sets in src/<model>/<model>.json) ---
 
 const DEFAULT_SET = 'design default values'; // set that OpenSCAD creates automatically – not built as a preset
@@ -159,32 +171,47 @@ function readPresetFile(file) {
 const slugify = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
+// A preset may carry its own list of parts: "parts": "[\"holder\", \"prop\"]" (OpenSCAD overrides `parts` with it, too).
+// Only those parts are built for the variant; without it the variant builds every part of the model.
+function presetParts(set) {
+    try {
+        const a = JSON.parse(set?.parts);
+        return Array.isArray(a) && a.length && a.every((x) => typeof x === 'string') ? a : null;
+    } catch {
+        return null;
+    }
+}
+
 // One variant = one built set of files. Without presets there is a single variant with base = model name,
 // with presets there is one variant per preset with base = <model>-<preset-slug>.
 function listVariants(name) {
-    const presets = Object.keys(readPresetFile(join(srcDir, name, `${name}.json`))).filter((p) => p !== DEFAULT_SET);
-    if (!presets.length) return [{ preset: null, base: name }];
+    const sets = readPresetFile(join(srcDir, name, `${name}.json`));
+    const presets = Object.keys(sets).filter((p) => p !== DEFAULT_SET);
+    if (!presets.length) return [{ preset: null, base: name, parts: null }];
     const seen = new Set();
     return presets.map((preset) => {
         const slug = slugify(preset);
         if (!slug || seen.has(slug)) throw new Error(`preset name "${preset}" gives an empty or duplicate file name "${slug}"`);
         seen.add(slug);
-        return { preset, base: `${name}-${slug}` };
+        return {
+            preset, base: `${name}-${slug}`, parts: presetParts(sets[preset]),
+            previewPart: typeof sets[preset]?.preview_part === "string" ? sets[preset].preview_part : null,
+        };
     });
 }
 
 // True when every expected output of the variant exists in `dir`
 function variantComplete(dir, v, version, parts, previewPart) {
-    return parts.every((p) => existsSync(join(dir, `${v.base}-${p}.stl`)))
+    return (v.parts ?? parts).every((p) => existsSync(join(dir, `${v.base}-${p}.stl`)))
         && (!previewPart || existsSync(join(dir, 'images', `${v.base}-preview.png`)));
 }
 
 // Renders the assembled / coloured preview PNG directly from the .scad (preview mode keeps color())
-function renderPreview(openscad, file, presetArgs, previewPart, pngFile) {
+function renderPreview(openscad, file, presetArgs, previewPart, pngFile, camera = ['55', '0', '25']) {
     mkdirSync(dirname(pngFile), { recursive: true });
     const r = spawnSync(openscad, [
         '-o', pngFile, ...presetArgs, '-D', `part="${previewPart}"`, '--preview', '--imgsize=900,700',
-        '--autocenter', '--viewall', '--projection=p', '--camera=0,0,0,55,0,25,500', '--colorscheme=Tomorrow', file,
+        '--autocenter', '--viewall', '--projection=p', `--camera=0,0,0,${camera.join(',')},500`, '--colorscheme=Tomorrow', file,
     ], { encoding: 'utf8' });
     if (r.status !== 0 || !existsSync(pngFile)) {
         console.warn(`  ! preview ${basename(pngFile)} failed: ${(r.stderr || String(r.error || '')).trim().split('\n').pop()}`);
@@ -200,6 +227,7 @@ function buildModel(openscad, name) {
     const parts = readParts(src);
     const version = readVersion(src);
     const previewPart = readPreviewPart(src);
+    const previewCamera = readPreviewCamera(src);
     if (!parts || parts.length === 0) {
         console.warn(`! ${name}: missing parts = [...] array, skipping`);
         return;
@@ -271,7 +299,7 @@ function buildModel(openscad, name) {
     for (const v of todo) {
         const presetArgs = v.preset ? ['-p', jsonFile, '-P', v.preset] : [];
         let variantFailed = false;
-        for (const part of parts.filter((p) => !onlyPart || p === onlyPart)) {
+        for (const part of (v.parts ?? parts).filter((p) => !onlyPart || p === onlyPart)) {
             const out = join(workDir, `${v.base}-${part}.stl`);
             const t0 = Date.now();
             process.stdout.write(`${v.base} v${version} / ${part} ... `);
@@ -292,9 +320,10 @@ function buildModel(openscad, name) {
             modelFailed = true;
             continue;
         }
-        if (previewPart) {
-            process.stdout.write(`${v.base} v${version} / ${previewPart} (preview) ... `);
-            console.log(renderPreview(openscad, file, presetArgs, previewPart, join(workDir, 'images', `${v.base}-preview.png`)) ? 'OK' : 'failed');
+        const pPart = v.previewPart ?? previewPart; // a preset may show a different preview_part
+        if (pPart) {
+            process.stdout.write(`${v.base} v${version} / ${pPart} (preview) ... `);
+            console.log(renderPreview(openscad, file, presetArgs, pPart, join(workDir, 'images', `${v.base}-preview.png`), previewCamera) ? 'OK' : 'failed');
         }
     }
     if (onlyPart) return;
