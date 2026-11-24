@@ -45,6 +45,9 @@ $fn = 50;
 parts = ["holder"];
 // Which part to render: "all" = preview, otherwise a name from `parts` (set by the build script via -D).
 part = "all";
+preview_part = "all"; // part rendered for the preview image (see scripts/build-stl.mjs)
+preview_camera = [50, 0, 20]; // camera rotation (x, y, z) of the preview image (see scripts/build-stl.mjs)
+preview_color_1 = "#e67e22"; // preview colours only (STL has no colour)
 model_version = "1.0.0";
 
 // rectangle w x h with all four corners chamfered by c
@@ -145,7 +148,9 @@ module render_part(p) {
 
 if (part == "all") {
     // Preview: all parts
-    for (p = parts) render_part(p);
+    // (preview only: turned over around the long axis so that the cutter slots face up; printed they face the bed;
+    // render() because the preview shows a white line along the through hole of the filament without it)
+    color(preview_color_1) translate([width, 0, height]) rotate([0, 180, 0]) render(convexity = 10) for (p = parts) render_part(p);
 } else {
     render_part(part);
 }
