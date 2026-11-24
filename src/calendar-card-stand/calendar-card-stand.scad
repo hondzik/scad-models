@@ -1,4 +1,5 @@
 // CHANGELOG (newest first; parsed by scripts/build-stl.mjs – format: "// <version> - <summary>", indented lines continue the entry)
+// 1.0.1 - presets 2-part (holder + prop) and all-in-one, coloured preview of the assembled stand; fix: cube() in holder() called with wrong arguments (same geometry, no warning)
 // 1.0.0 - Initial versioned release: card holder plus a separate prop that tilts it to stand_angle, the prop cut off at prop_cut_height, plus an all-in-one variant with both fused together
 //
 
@@ -49,7 +50,11 @@ parts = ["holder", "prop", "all-in-one"];
 // Which part to render: "all" = all side by side (preview), "assembly" = holder tilted on the prop,
 // otherwise a name from `parts` (set by the build script via -D).
 part = "all";
-model_version = "1.0.0";
+preview_part = "assembly"; // part rendered for the assembled preview image (see scripts/build-stl.mjs)
+preview_camera = [80, 0, 75]; // camera rotation (x, y, z) of the preview image (see scripts/build-stl.mjs)
+preview_color_1 = "#e67e22"; // preview colours only (STL has no colour)
+preview_color_2 = "#3498db";
+model_version = "1.0.1";
 
 // ---- derived values (definition order matters) ----
 holder_width = card_width + stand_clearance;
@@ -118,7 +123,7 @@ module holder(grooves = true) {
             card_corner_radius
         );
         // remove small edges
-        translate([0,  thin_wall + stand_clearance + card_corner_radius, wall_thickness]) cube(holder_width, 10, 10);
+        translate([0,  thin_wall + stand_clearance + card_corner_radius, wall_thickness]) cube([holder_width, 10, 10]);
         // L-shaped grooves for the tongues of the prop: along the back face and into the bottom edge
         if (grooves) for (x = prop_rib_xs) {
             translate([x + tongue_dx - prop_fit_clearance, -1, -1]) {
@@ -211,14 +216,17 @@ module prop() {
 
 // The holder tilted onto the ramp of the prop, as it stands on the table
 module assembly() {
-    prop();
-    color("orange") translate([0, 0, ramp_lift]) rotate([stand_angle, 0, 0]) holder();
+    color(preview_color_1) prop();
+    // render(): the cavity of the holder has the same width as the holder, so its side faces are coplanar and the
+    // preview would show them hatched; a rendered mesh does not
+    // the translucent holder is drawn last (the preview would hide everything drawn after a translucent object)
+    color(preview_color_2, 0.35) translate([0, 0, ramp_lift]) rotate([stand_angle, 0, 0]) render(convexity = 10) holder();
 }
 
 // Both parts fused into one solid in the assembled pose (the holder tilted on the prop, standing on the
 // table plane Z=0). No grooves, no clearance: the tongues of the prop are part of the holder.
 module all_in_one() {
-    union() {
+    render(convexity = 10) union() {
         prop();
         translate([0, 0, ramp_lift]) rotate([stand_angle, 0, 0]) holder(grooves = false);
     }
@@ -238,5 +246,6 @@ if (part == "all") {
 } else if (part == "assembly") {
     assembly();
 } else {
-    render_part(part);
+    // (the colour is only for the preview image; STL has no colour)
+    color(preview_color_1) render_part(part);
 }

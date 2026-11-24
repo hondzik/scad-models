@@ -6,30 +6,26 @@ Parametric OpenSCAD models for 3D printing. Every model lives in `src/<model>/` 
 
 | Model | Description | Version | Parts |
 |---|---|---|---|
-| [bobbin-case](#bobbin-case) | – | ? *(not built yet)* |  |
-| [calendar-card-stand](#calendar-card-stand) | Parametric stand for a pack of cards (e.g. a card calendar of 148 × 105 mm cards, 13 mm thick): a tray that holds the pack at its bottom edge and a separate prop that tilts it to a chosen angle. An all-in-one variant with both parts fused together is included. | 1.0.0 | `holder`, `prop`, `all-in-one` |
+| [calendar-card-stand](#calendar-card-stand) | Parametric stand for a pack of cards (e.g. a card calendar of 148 × 105 mm cards, 13 mm thick): a tray that holds the pack at its bottom edge and a separate prop that tilts it to a chosen angle. An all-in-one variant with both parts fused together is included. | 1.0.1 | `holder`, `prop`, `all-in-one` |
 | [filament-cutting-holder](#filament-cutting-holder) | Parametric block with a filament channel for cutting filament at defined angles: a 90° cutter slot at one end, angled slots (by default 60° and 45°) at the other end, chamfered edges and magnet holes in the bottom face. | 1.0.0 | `holder` |
 | [name-letter](#name-letter) | Big capital first letter of a name with the whole name inlaid across it. Two parts: `letter` (with a pocket) and `name` (the inlay to glue in); print them in two colours. | 1.0.1 | `letter`, `name` |
 | [zbminir2-cord-floor-switch](#zbminir2-cord-floor-switch) | Round two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both ends, plus a floor-switch button with a spring-loaded cap. | 1.0.0 | `base`, `lid`, `clamp`, `cap` |
 | [zbminir2-cord-switch](#zbminir2-cord-switch) | Rectangular two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both short sides. Superseded by the round variant `zbminir2-cord-floor-switch`. | 1.0.0 | `base`, `lid`, `clamp` |
 
-## bobbin-case
-
-- Source: [`src/bobbin-case/bobbin-case.scad`](src/bobbin-case/bobbin-case.scad)
-- Current version: **?** *(not built yet – `npm run build`)*
-- Parts: 
-
 ## calendar-card-stand
 
 Parametric stand for a pack of cards (e.g. a card calendar of 148 × 105 mm cards, 13 mm thick): a tray that holds the pack at its bottom edge and a separate prop that tilts it to a chosen angle. An all-in-one variant with both parts fused together is included.
 
+<img src="dist/calendar-card-stand/v1.0.1/images/calendar-card-stand-2-part-preview.png" alt="calendar-card-stand 2-part-preview" width="340"> <img src="dist/calendar-card-stand/v1.0.1/images/calendar-card-stand-all-in-one-preview.png" alt="calendar-card-stand all-in-one-preview" width="340">
+
 - Source: [`src/calendar-card-stand/calendar-card-stand.scad`](src/calendar-card-stand/calendar-card-stand.scad)
 - Documentation: [`src/calendar-card-stand/README.md`](src/calendar-card-stand/README.md)
-- Current version: **1.0.0**
+- Current version: **1.0.1**
 - Parts: `holder`, `prop`, `all-in-one`
 
 | Version | Download (STL) | Source | Changes |
 |---|---|---|---|
+| 1.0.1 | [calendar-card-stand-2-part-holder.stl](dist/calendar-card-stand/v1.0.1/calendar-card-stand-2-part-holder.stl)<br>[calendar-card-stand-2-part-prop.stl](dist/calendar-card-stand/v1.0.1/calendar-card-stand-2-part-prop.stl)<br>[calendar-card-stand-all-in-one-all-in-one.stl](dist/calendar-card-stand/v1.0.1/calendar-card-stand-all-in-one-all-in-one.stl) | [calendar-card-stand-v1.0.1.scad](dist/calendar-card-stand/v1.0.1/calendar-card-stand-v1.0.1.scad) | presets 2-part (holder + prop) and all-in-one, coloured preview of the assembled stand; fix: cube() in holder() called with wrong arguments (same geometry, no warning) |
 | 1.0.0 | [calendar-card-stand-all-in-one.stl](dist/calendar-card-stand/v1.0.0/calendar-card-stand-all-in-one.stl)<br>[calendar-card-stand-holder.stl](dist/calendar-card-stand/v1.0.0/calendar-card-stand-holder.stl)<br>[calendar-card-stand-prop.stl](dist/calendar-card-stand/v1.0.0/calendar-card-stand-prop.stl) | [calendar-card-stand-v1.0.0.scad](dist/calendar-card-stand/v1.0.0/calendar-card-stand-v1.0.0.scad) | Initial versioned release: card holder plus a separate prop that tilts it to stand_angle, the prop cut off at prop_cut_height, plus an all-in-one variant with both fused together |
 
 ## filament-cutting-holder

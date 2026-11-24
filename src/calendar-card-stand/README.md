@@ -31,6 +31,17 @@ The tilt is given by `stand_angle` – the angle of the card plane from the tabl
 - `prop_stop_height`, `prop_toe` – the stop at the bottom of the ramp.
 - `prop_tongue_depth`, `prop_tongue_width`, `prop_fit_clearance` – the tongues that sink into the holder and the room of the grooves around them.
 
+## Presets
+
+`calendar-card-stand.json` has two presets that decide what is built; the files are named `calendar-card-stand-<preset>-<part>.stl`:
+
+| Preset | Builds |
+|---|---|
+| `2-part` | `holder` and `prop` as separate parts |
+| `all-in-one` | only `all-in-one` (both fused into one solid) |
+
+The preset carries a `parts` list (see `scripts/build-stl.mjs`), so only the listed parts are built for it. Run `npm run build -- calendar-card-stand` (all presets) or `npm run build -- calendar-card-stand --preset="2-part"`.
+
 ## Notes
 
 - Preview modes: the default (`part = "all"`) shows every part side by side, `part = "assembly"` shows the holder (orange) tilted on the prop.

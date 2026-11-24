@@ -1,0 +1,35 @@
+{
+    "parameterSets": {
+        "design default values": {
+            "$fn": "50",
+            "card_corner_radius": "5",
+            "card_height": "105",
+            "card_pack_thickness": "13",
+            "card_width": "148",
+            "lock": "0.5",
+            "prop_base_tail": "20",
+            "prop_base_thickness": "3",
+            "prop_cut_height": "50",
+            "prop_fit_clearance": "0.2",
+            "prop_rib_inset": "5",
+            "prop_rib_width": "8",
+            "prop_stop_height": "6",
+            "prop_tail_fillet": "5",
+            "prop_toe": "3",
+            "prop_tongue_depth": "1",
+            "prop_tongue_width": "4",
+            "stand_angle": "60",
+            "stand_clearance": "0.5",
+            "thin_wall": "2",
+            "wall_thickness": "3"
+        },
+        "2-part": {
+            "parts": "[\"holder\", \"prop\"]"
+        },
+        "all-in-one": {
+            "parts": "[\"all-in-one\"]",
+            "preview_part": "all-in-one"
+        }
+    },
+    "fileFormatVersion": "1"
+}
