@@ -67,6 +67,8 @@ Big capital first letter of a name with the whole name inlaid across it. Two par
 
 Round two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both ends, plus a floor-switch button with a spring-loaded cap.
 
+<img src="dist/zbminir2-cord-floor-switch/v1.0.0/images/zbminir2-cord-floor-switch-preview.png" alt="zbminir2-cord-floor-switch preview" width="340">
+
 - Source: [`src/zbminir2-cord-floor-switch/zbminir2-cord-floor-switch.scad`](src/zbminir2-cord-floor-switch/zbminir2-cord-floor-switch.scad)
 - Documentation: [`src/zbminir2-cord-floor-switch/README.md`](src/zbminir2-cord-floor-switch/README.md)
 - Current version: **1.0.0**

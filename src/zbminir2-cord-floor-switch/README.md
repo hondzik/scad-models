@@ -20,7 +20,7 @@ This enclosure holds a **mains-voltage** device. Read this before building it.
 | `clamp` | Cable clamp plate (2 M3 screws) | groove down, **print 2×** |
 | `cap` | Button cap with spring guide and a stop band | rounded top down, open side up |
 
-Previews of every part are generated into `dist/zbminir2-cord-floor-switch/v<version>/images/` and shown in the main [README](../../README.md).
+A preview of the assembled enclosure is generated into `dist/zbminir2-cord-floor-switch/v<version>/images/` and shown in the main [README](../../README.md): base orange, lid blue and translucent, cable clamps dark red, button cap blue. The colours are for the image only (STL has no colour).
 
 ## Assembly
 
