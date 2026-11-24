@@ -102,6 +102,10 @@ assert(inner_z - rib_h - relay_z >= 0, "ZBMINIR does not fit the height (inner_z
 parts = ["base", "lid", "clamp"];
 // Which part to render: "all" = all side by side (preview), otherwise a name from `parts` (set by the build script via -D).
 part = "all";
+preview_part = "assembled"; // part rendered for the assembled preview image (see scripts/build-stl.mjs)
+preview_color_1 = "#e67e22"; // preview colours only (STL has no colour)
+preview_color_2 = "#3498db";
+preview_color_3 = "#8b1a1a"; // inner fasteners (cable clamps)
 // Version of this model: bump it on every release (npm run release); the changelog above documents it
 model_version = "1.0.0";
 
@@ -119,17 +123,29 @@ module render_part(p) {
         // cable clamp, groove down (print 2x)
         translate([0, clamp_w/2, 0])
             clamp();
+    else if (p == "assembled")
+        assembled();
     else
         assert(false, str("Unknown part: ", p));
 }
 
+// Preview only (coloured, not exported to STL): the finished case. The lid is translucent so that the inside shows;
+// it is drawn LAST, because the preview writes translucent objects into the depth buffer and anything drawn after
+// it would vanish behind it. The cable clamps sit on the blocks in the parting plane.
+module assembled() {
+    color(preview_color_1) base();
+    color(preview_color_3) at_both_ends()
+        translate([wall + 0.2, outer_y/2, outer_half_z]) clamp();
+    color(preview_color_2, 0.35) lid();
+}
+
 if (part == "all") {
     // Preview: all parts side by side
-    render_part("base");
-    translate([0, outer_y + 15, 0]) render_part("lid");
+    color(preview_color_1) render_part("base");
+    translate([0, outer_y + 15, 0]) color(preview_color_2) render_part("lid");
     for (i = [0, 1])
         translate([i * (clamp_x + 10), -clamp_w - 10, 0])
-            render_part("clamp");
+            color(preview_color_3) render_part("clamp");
 } else {
     render_part(part);
 }

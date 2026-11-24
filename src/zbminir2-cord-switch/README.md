@@ -19,7 +19,7 @@ This enclosure holds a **mains-voltage** device. Read this before building it.
 | `lid` | Upper half with the LED, reset and switch holes and the top ZBMINIR frame | flipped, outer face down |
 | `clamp` | Cable clamp plate (2 M3 screws) | groove down, **print 2×** |
 
-Previews of every part are generated into `dist/zbminir2-cord-switch/v<version>/images/` and shown in the main [README](../../README.md).
+A preview of the assembled enclosure is generated into `dist/zbminir2-cord-switch/v<version>/images/` and shown in the main [README](../../README.md): base orange, lid blue and translucent, cable clamps dark red. The colours are for the image only (STL has no colour).
 
 ## Notes
 

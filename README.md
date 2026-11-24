@@ -82,6 +82,8 @@ Round two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and c
 
 Rectangular two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both short sides. Superseded by the round variant `zbminir2-cord-floor-switch`.
 
+<img src="dist/zbminir2-cord-switch/v1.0.0/images/zbminir2-cord-switch-preview.png" alt="zbminir2-cord-switch preview" width="340">
+
 - Source: [`src/zbminir2-cord-switch/zbminir2-cord-switch.scad`](src/zbminir2-cord-switch/zbminir2-cord-switch.scad)
 - Documentation: [`src/zbminir2-cord-switch/README.md`](src/zbminir2-cord-switch/README.md)
 - Current version: **1.0.0**
