@@ -8,6 +8,7 @@ Parametric OpenSCAD models for 3D printing. Every model lives in `src/<model>/` 
 |---|---|---|---|
 | [calendar-card-stand](#calendar-card-stand) | Parametric stand for a pack of cards (e.g. a card calendar of 148 × 105 mm cards, 13 mm thick): a tray that holds the pack at its bottom edge and a separate prop that tilts it to a chosen angle. An all-in-one variant with both parts fused together is included. | 1.0.1 | `holder`, `prop`, `all-in-one` |
 | [filament-cutting-holder](#filament-cutting-holder) | Parametric block with a filament channel for cutting filament at defined angles: a 90° cutter slot at one end, angled slots (by default 60° and 45°) at the other end, chamfered edges and magnet holes in the bottom face. | 1.0.0 | `holder` |
+| [laskakit-wled-case](#laskakit-wled-case) | Slim case with a lid for the LaskaKit ESP32 WLED controller board, redrawn as a parametric OpenSCAD model. Based on the LaskaKit ESPwled slim case: <https://github.com/LaskaKit/ESPwled/tree/main/3D/slimcase.3mf> | 1.0.0 | `case`, `lid` |
 | [name-letter](#name-letter) | Big capital first letter of a name with the whole name inlaid across it. Two parts: `letter` (with a pocket) and `name` (the inlay to glue in); print them in two colours. | 1.0.1 | `letter`, `name` |
 | [zbminir2-cord-floor-switch](#zbminir2-cord-floor-switch) | Round two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both ends, plus a floor-switch button with a spring-loaded cap. | 1.0.0 | `base`, `lid`, `clamp`, `cap` |
 | [zbminir2-cord-switch](#zbminir2-cord-switch) | Rectangular two-part enclosure for a Sonoff ZBMINIR2 module with a cable passage and clamp on both short sides. Superseded by the round variant `zbminir2-cord-floor-switch`. | 1.0.0 | `base`, `lid`, `clamp` |
@@ -42,6 +43,21 @@ Parametric block with a filament channel for cutting filament at defined angles:
 | Version | Download (STL) | Source | Changes |
 |---|---|---|---|
 | 1.0.0 | [filament-cutting-holder-holder.stl](dist/filament-cutting-holder/v1.0.0/filament-cutting-holder-holder.stl) | [filament-cutting-holder-v1.0.0.scad](dist/filament-cutting-holder/v1.0.0/filament-cutting-holder-v1.0.0.scad) | Initial versioned release: filament cutting holder with 90° and angled cutter slots, chamfered edges and magnet holes |
+
+## laskakit-wled-case
+
+Slim case with a lid for the LaskaKit ESP32 WLED controller board, redrawn as a parametric OpenSCAD model. Based on the LaskaKit ESPwled slim case: <https://github.com/LaskaKit/ESPwled/tree/main/3D/slimcase.3mf>
+
+<img src="dist/laskakit-wled-case/v1.0.0/images/laskakit-wled-case-preview.png" alt="laskakit-wled-case preview" width="340">
+
+- Source: [`src/laskakit-wled-case/laskakit-wled-case.scad`](src/laskakit-wled-case/laskakit-wled-case.scad)
+- Documentation: [`src/laskakit-wled-case/README.md`](src/laskakit-wled-case/README.md)
+- Current version: **1.0.0**
+- Parts: `case`, `lid`
+
+| Version | Download (STL) | Source | Changes |
+|---|---|---|---|
+| 1.0.0 | [laskakit-wled-case-case.stl](dist/laskakit-wled-case/v1.0.0/laskakit-wled-case-case.stl)<br>[laskakit-wled-case-lid.stl](dist/laskakit-wled-case/v1.0.0/laskakit-wled-case-lid.stl) | [laskakit-wled-case-v1.0.0.scad](dist/laskakit-wled-case/v1.0.0/laskakit-wled-case-v1.0.0.scad) | first release: 12 mm high case with cable tunnel, M3 heat-set insert ears and USB-C recess, plus lid with countersunk M3 pads |
 
 ## name-letter
 
